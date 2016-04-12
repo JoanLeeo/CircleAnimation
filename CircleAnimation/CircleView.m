@@ -13,7 +13,7 @@
     CGPoint _centerPoint;
     CGFloat _deltaAngle;
     CGFloat _radius;
-    CGFloat _lastAngle;
+    CGFloat _lastSubViewAngle;
     
 }
 @property (nonatomic, strong) UIView *centerView;
@@ -33,7 +33,6 @@
     CGFloat centerX = CGRectGetWidth(self.frame) * 0.5f;
     CGFloat centerY = centerX;
     _centerPoint = CGPointMake(centerX, centerY);
-    
     _centerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 100, 100)];
     _centerView.center = _centerPoint;
     _centerView.backgroundColor = [UIColor blueColor];
@@ -51,7 +50,7 @@
     CGFloat subViewW = 50;
     CGFloat subViewH = subViewW;
     _radius = centerX - subViewW * 0.5f;
-    _lastAngle = 0;
+    _lastSubViewAngle = 0;
     for (int i = 0; i < 6; i++) {
         currentAngle = _deltaAngle * i;
         subViewCenterX = centerX + _radius * sin(currentAngle);
@@ -72,48 +71,47 @@
 - (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
 
     UITouch *touch = [touches anyObject];
-    CGPoint point = [touch locationInView:self];
+    CGPoint currentPoint = [touch locationInView:self];
     
-    
-    CGFloat pointRadius = sqrt(pow(point.y - _centerPoint.y, 2) + pow(point.x - _centerPoint.x, 2));
-    CGFloat pointAngle = acos((point.x - _centerPoint.x) / pointRadius);
-    if (point.y > _centerPoint.y) {
+    //1.计算当前点相对于y轴的角度
+    CGFloat currentPointRadius = sqrt(pow(currentPoint.y - _centerPoint.y, 2) + pow(currentPoint.x - _centerPoint.x, 2));
+    if (currentPointRadius == 0) {//当点在中心点时，被除数不能为0
+        return;
+    }
+    CGFloat pointAngle = acos((currentPoint.x - _centerPoint.x) / currentPointRadius);
+    if (currentPoint.y > _centerPoint.y) {
         pointAngle = 2 * M_PI - pointAngle;
     }
     
+    //2.计算上一个点相对于y轴的角度
     CGFloat lastPointRadius = sqrt(pow(_lastPoint.y - _centerPoint.y, 2) + pow(_lastPoint.x - _centerPoint.x, 2));
-    
-    
-    
-    CGFloat angle = atanf((point.y - _centerPoint.y) / (point.x - _centerPoint.x)) - atanf((_lastPoint.y - _centerPoint.y) / (_lastPoint.x - _centerPoint.x));
+    if (lastPointRadius == 0) {
+        return;
+    }
+    CGFloat lastAngle = acos((_lastPoint.x - _centerPoint.x) / lastPointRadius);
+    if (_lastPoint.y > _centerPoint.y) {
+        lastAngle = 2 * M_PI - lastAngle;
+    }
+    //3.变化的角度
+    CGFloat angle = lastAngle - pointAngle;
     
     _centerView.transform = CGAffineTransformRotate(_centerView.transform, angle);
     
-    
-//    _lastAngle = fmod((_lastAngle + angle), 2 * M_PI);
-    _lastAngle += angle;
-    NSLog(@"%f - %f", _lastAngle / M_PI, angle);
-    //计算当前第一个subView
-//    UIImageView *subImgView = [self viewWithTag:kTag];
-//    
-//    CGFloat tmpAngle = acosf((subImgView.center.x - _centerPoint.x) / _radius);
-//    if (subImgView.center.y > _centerPoint.y) {
-//        tmpAngle = 2 * M_PI - tmpAngle;
-//    }
-//    NSLog(@"%f", tmpAngle / M_PI);
+    _lastSubViewAngle = fmod(_lastSubViewAngle + angle, 2 * M_PI);
+    NSLog(@"%f", _lastSubViewAngle);
     
     CGFloat currentAngle = 0;
     CGFloat subViewCenterX = 0;
     CGFloat subViewCenterY = 0;
     for (int i = 0; i < 6; i++) {
         UIImageView *subImgView = [self viewWithTag:kTag];
-        currentAngle = _deltaAngle * i + _lastAngle;
+        currentAngle = _deltaAngle * i + _lastSubViewAngle;
         subViewCenterX = _centerPoint.x + _radius * sin(currentAngle);
         subViewCenterY = _centerPoint.x - _radius * cos(currentAngle);
         subImgView = [self viewWithTag:kTag + i];
         subImgView.center = CGPointMake(subViewCenterX, subViewCenterY);
     }
     
-    _lastPoint = point;
+    _lastPoint = currentPoint;
 }
 @end
