@@ -13,10 +13,10 @@
     CGPoint _centerPoint;
     CGFloat _deltaAngle;
     CGFloat _radius;
-    CGFloat _lastSubViewAngle;
+    CGFloat _lastImgViewAngle;
     
 }
-@property (nonatomic, strong) UIView *centerView;
+@property (nonatomic, strong) UIView *blueView;
 @end
 @implementation CircleView
 
@@ -24,7 +24,7 @@
 - (instancetype)initWithFrame:(CGRect)frame {
     if (self = [super initWithFrame:frame]) {
         [self customUI];
-        self.backgroundColor = [UIColor grayColor];
+//        self.backgroundColor = [UIColor grayColor];
     }
     return self;
 }
@@ -32,32 +32,29 @@
     
     CGFloat centerX = CGRectGetWidth(self.frame) * 0.5f;
     CGFloat centerY = centerX;
-    _centerPoint = CGPointMake(centerX, centerY);
-    _centerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 100, 100)];
-    _centerView.center = _centerPoint;
-    _centerView.backgroundColor = [UIColor blueColor];
-    [self addSubview:_centerView];
+    _centerPoint = CGPointMake(centerX, centerY);//中心点
+    _blueView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 100, 100)];//蓝色view
+    _blueView.center = _centerPoint;
+    _blueView.backgroundColor = [UIColor blueColor];
+    [self addSubview:_blueView];
+    UIView *redView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 50, 50)];//红色view
+    redView.backgroundColor = [UIColor redColor];
+    [_blueView addSubview:redView];
     
-    UIView *subView1 = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 50, 50)];
-    subView1.backgroundColor = [UIColor redColor];
-    [_centerView addSubview:subView1];
-    
-    
-    _deltaAngle = M_PI / 3.0f;
+    _deltaAngle = M_PI / 3.0f;//6个imgView的间隔角度
     CGFloat currentAngle = 0;
-    CGFloat subViewCenterX = 0;
-    CGFloat subViewCenterY = 0;
-    CGFloat subViewW = 50;
-    CGFloat subViewH = subViewW;
-    _radius = centerX - subViewW * 0.5f;
-    _lastSubViewAngle = 0;
+    CGFloat imgViewCenterX = 0;
+    CGFloat imgViewCenterY = 0;
+    CGFloat imgViewW = 80;
+    CGFloat imgViewH =imgViewW;
+    _radius = centerX - imgViewW * 0.5f;//imgView.center到self.center的距离
     for (int i = 0; i < 6; i++) {
         currentAngle = _deltaAngle * i;
-        subViewCenterX = centerX + _radius * sin(currentAngle);
-        subViewCenterY = centerY - _radius * cos(currentAngle);
-        UIImageView *imgView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, subViewW, subViewH)];
+        imgViewCenterX = centerX + _radius * sin(currentAngle);
+        imgViewCenterY = centerY - _radius * cos(currentAngle);
+        UIImageView *imgView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, imgViewW, imgViewH)];
         imgView.tag = kTag + i;
-        imgView.center = CGPointMake(subViewCenterX, subViewCenterY);
+        imgView.center = CGPointMake(imgViewCenterX, imgViewCenterY);
         imgView.image = [UIImage imageNamed:[NSString stringWithFormat:@"circle%d", i]];
         [self addSubview:imgView];
     }
@@ -95,21 +92,21 @@
     //3.变化的角度
     CGFloat angle = lastAngle - pointAngle;
     
-    _centerView.transform = CGAffineTransformRotate(_centerView.transform, angle);
+    _blueView.transform = CGAffineTransformRotate(_blueView.transform, angle);
     
-    _lastSubViewAngle = fmod(_lastSubViewAngle + angle, 2 * M_PI);
-    NSLog(@"%f", _lastSubViewAngle);
+    _lastImgViewAngle = fmod(_lastImgViewAngle + angle, 2 * M_PI);
+    NSLog(@"%f", _lastImgViewAngle);
     
     CGFloat currentAngle = 0;
-    CGFloat subViewCenterX = 0;
-    CGFloat subViewCenterY = 0;
+    CGFloat imgViewCenterX = 0;
+    CGFloat imgViewCenterY = 0;
     for (int i = 0; i < 6; i++) {
-        UIImageView *subImgView = [self viewWithTag:kTag];
-        currentAngle = _deltaAngle * i + _lastSubViewAngle;
-        subViewCenterX = _centerPoint.x + _radius * sin(currentAngle);
-        subViewCenterY = _centerPoint.x - _radius * cos(currentAngle);
-        subImgView = [self viewWithTag:kTag + i];
-        subImgView.center = CGPointMake(subViewCenterX, subViewCenterY);
+        UIImageView *imgView = [self viewWithTag:kTag];
+        currentAngle = _deltaAngle * i + _lastImgViewAngle;
+        imgViewCenterX = _centerPoint.x + _radius * sin(currentAngle);
+        imgViewCenterY = _centerPoint.x - _radius * cos(currentAngle);
+        imgView = [self viewWithTag:kTag + i];
+        imgView.center = CGPointMake(imgViewCenterX, imgViewCenterY);
     }
     
     _lastPoint = currentPoint;
