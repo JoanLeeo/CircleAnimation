@@ -9,12 +9,11 @@
 #import "CircleView.h"
 #define kTag 100
 @interface CircleView() {
-    CGPoint _lastPoint;
+    CGFloat _lastPointAngle;//上一个点相对于x轴角度
     CGPoint _centerPoint;
     CGFloat _deltaAngle;
     CGFloat _radius;
     CGFloat _lastImgViewAngle;
-    
 }
 @property (nonatomic, strong) UIView *blueView;
 @end
@@ -62,41 +61,37 @@
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
 
     UITouch *touch = [touches anyObject];
-    _lastPoint = [touch locationInView:self];
-    
+    CGPoint point = [touch locationInView:self];
+    //计算上一个点相对于x轴的角度
+    CGFloat lastPointRadius = sqrt(pow(point.y - _centerPoint.y, 2) + pow(point.x - _centerPoint.x, 2));
+    if (lastPointRadius == 0) {
+        return;
+    }
+    _lastPointAngle = acos((point.x - _centerPoint.x) / lastPointRadius);
+    if (point.y > _centerPoint.y) {
+        _lastPointAngle = 2 * M_PI - _lastPointAngle;
+    }
 }
 - (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
 
     UITouch *touch = [touches anyObject];
     CGPoint currentPoint = [touch locationInView:self];
     
-    //1.计算当前点相对于y轴的角度
+    //1.计算当前点相对于x轴的角度
     CGFloat currentPointRadius = sqrt(pow(currentPoint.y - _centerPoint.y, 2) + pow(currentPoint.x - _centerPoint.x, 2));
     if (currentPointRadius == 0) {//当点在中心点时，被除数不能为0
         return;
     }
-    CGFloat pointAngle = acos((currentPoint.x - _centerPoint.x) / currentPointRadius);
+    CGFloat curentPointAngle = acos((currentPoint.x - _centerPoint.x) / currentPointRadius);
     if (currentPoint.y > _centerPoint.y) {
-        pointAngle = 2 * M_PI - pointAngle;
+        curentPointAngle = 2 * M_PI - curentPointAngle;
     }
-    
-    //2.计算上一个点相对于y轴的角度
-    CGFloat lastPointRadius = sqrt(pow(_lastPoint.y - _centerPoint.y, 2) + pow(_lastPoint.x - _centerPoint.x, 2));
-    if (lastPointRadius == 0) {
-        return;
-    }
-    CGFloat lastAngle = acos((_lastPoint.x - _centerPoint.x) / lastPointRadius);
-    if (_lastPoint.y > _centerPoint.y) {
-        lastAngle = 2 * M_PI - lastAngle;
-    }
-    //3.变化的角度
-    CGFloat angle = lastAngle - pointAngle;
+    //2.变化的角度
+    CGFloat angle = _lastPointAngle - curentPointAngle;
     
     _blueView.transform = CGAffineTransformRotate(_blueView.transform, angle);
     
-    _lastImgViewAngle = fmod(_lastImgViewAngle + angle, 2 * M_PI);
-    NSLog(@"%f", _lastImgViewAngle);
-    
+    _lastImgViewAngle = fmod(_lastImgViewAngle + angle, 2 * M_PI);//对当前角度取模
     CGFloat currentAngle = 0;
     CGFloat imgViewCenterX = 0;
     CGFloat imgViewCenterY = 0;
@@ -109,6 +104,6 @@
         imgView.center = CGPointMake(imgViewCenterX, imgViewCenterY);
     }
     
-    _lastPoint = currentPoint;
+    _lastPointAngle = curentPointAngle;
 }
 @end
